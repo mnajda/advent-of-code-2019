@@ -32,4 +32,4 @@ Given this additional criterion, but still ignoring the range rule, the followin
 `111122` meets the criteria (even though 1 is repeated more than twice, it still contains a double 22).
 How many different passwords within the range given in your puzzle input meet all of the criteria?
 
-Your puzzle input is still `134564-585159`.
+Your puzzle answer was `1306`.
