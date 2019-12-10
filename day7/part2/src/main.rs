@@ -85,8 +85,8 @@ impl Amp {
                 };
             }
             4 => {
-                let source = get_value(addressing[0], self.ip + 1, &self.program) as usize;
-                self.output.push_back(source as i32);
+                let source = get_value(addressing[0], self.ip + 1, &self.program);
+                self.output.push_back(source);
 
                 self.ip += get_operation_size(&op);
             }
