@@ -1,0 +1,122 @@
+use std::env;
+use std::fs;
+
+mod intcode;
+
+#[derive(Debug)]
+enum Direction {
+    Up,
+    Down,
+    Left,
+    Right,
+}
+
+fn tokenize(filepath: &String) -> Vec<i64> {
+    let contents = fs::read_to_string(filepath).expect("Error reading file");
+    return contents
+        .split(',')
+        .map(|input| input.parse().unwrap())
+        .collect();
+}
+
+fn get_direction(new_move: i64, last_move: &Direction) -> Direction {
+    match last_move {
+        Direction::Up => {
+            if new_move == 1 {
+                return Direction::Right;
+            } else {
+                return Direction::Left;
+            }
+        }
+        Direction::Down => {
+            if new_move == 1 {
+                return Direction::Left;
+            } else {
+                return Direction::Right;
+            }
+        }
+        Direction::Left => {
+            if new_move == 1 {
+                return Direction::Up;
+            } else {
+                return Direction::Down;
+            }
+        }
+        Direction::Right => {
+            if new_move == 1 {
+                return Direction::Down;
+            } else {
+                return Direction::Up;
+            }
+        }
+    }
+}
+
+fn get_position(last_position: &(i64, i64), direction: &Direction) -> (i64, i64) {
+    match direction {
+        Direction::Up => (last_position.0, last_position.1 + 1),
+        Direction::Down => (last_position.0, last_position.1 - 1),
+        Direction::Left => (last_position.0 - 1, last_position.1),
+        Direction::Right => (last_position.0 + 1, last_position.1),
+    }
+}
+
+fn get_output(output: Option<i64>) -> i64 {
+    match output {
+        Some(item) => item,
+        None => panic!("No output value"),
+    }
+}
+
+fn is_unique(pos: &(i64, i64), moves: &Vec<(i64, (i64, i64))>) -> bool {
+    return !moves.iter().any(|item| item.1 == *pos);
+}
+
+fn get_current_color(pos: &(i64, i64), moves: &Vec<(i64, (i64, i64))>) -> i64 {
+    match moves.iter().find(|item| item.1 == *pos) {
+        Some(item) => item.0,
+        None => 0,
+    }
+}
+
+fn solve(program: Vec<i64>) {
+    let mut moves: Vec<(i64, (i64, i64))> = Vec::new();
+    let mut machine = intcode::create_new_machine(program);
+    let mut position: (i64, i64) = (0, 0);
+    let mut direction: Direction = Direction::Up;
+
+    while !machine.is_finished() {
+        let input = get_current_color(&position, &moves);
+
+        machine.push_input(input);
+        machine.execute_program();
+
+        let color = get_output(machine.pop_output());
+        let next_move = get_output(machine.pop_output());
+
+        if is_unique(&position, &moves) {
+            moves.push((color, position));
+        }
+        else {
+            let elem = moves.iter().position(|item| item.1 == position).unwrap();
+            moves[elem] = (color, position);
+        }
+
+        direction = get_direction(next_move, &direction);
+        position = get_position(&position, &direction);
+    }
+
+    println!("{}", moves.len());
+}
+
+fn main() {
+    let args: Vec<String> = env::args().collect();
+    if args.len() < 2 {
+        println!("Provide filename");
+        return;
+    }
+    let filepath = &args[1];
+
+    let program = tokenize(filepath);
+    solve(program);
+}
